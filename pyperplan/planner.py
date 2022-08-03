@@ -139,13 +139,13 @@ def _search(task, search, heuristic, use_preferred_ops=False):
     logging.info(f"Search start: {task.name}")
     if heuristic:
         if use_preferred_ops:
-            solution = search(task, heuristic, use_preferred_ops)
+            solution, metrics = search(task, heuristic, use_preferred_ops)
         else:
-            solution = search(task, heuristic)
+            solution, metrics = search(task, heuristic)
     else:
-        solution = search(task)
+        solution, metrics = search(task)
     logging.info(f"Search end: {task.name}")
-    return solution
+    return solution, metrics
 
 
 def write_solution(solution, filename):
@@ -178,11 +178,11 @@ def search_plan(
         heuristic = heuristic_class(task)
     search_start_time = time.process_time()
     if use_preferred_ops and isinstance(heuristic, heuristics.hFFHeuristic):
-        solution = _search(task, search, heuristic, use_preferred_ops=True)
+        solution, metrics = _search(task, search, heuristic, use_preferred_ops=True)
     else:
-        solution = _search(task, search, heuristic)
+        solution, metrics = _search(task, search, heuristic)
     logging.info("Search time: {:.2}".format(time.process_time() - search_start_time))
-    return solution
+    return solution, metrics
 
 
 def validate_solution(domain_file, problem_file, solution_file):

@@ -34,6 +34,7 @@ def breadth_first_search(planning_task):
     @return: The solution as a list of operators or None if the task is
     unsolvable.
     """
+    metrics = {"nodes_expanded": 0, "nodes_created": 0}
     # counts the number of loops (only for printing)
     iteration = 0
     # fifo-queue storing the nodes which are next to explore
@@ -49,19 +50,21 @@ def breadth_first_search(planning_task):
         )
         # get the next node to explore
         node = queue.popleft()
+        metrics["nodes_expanded"] += 1
         # exploring the node or if it is a goal node extracting the plan
         if planning_task.goal_reached(node.state):
             logging.info("Goal reached. Start extraction of solution.")
             logging.info("%d Nodes expanded" % iteration)
-            return node.extract_solution()
+            return node.extract_solution(), metrics
         for operator, successor_state in planning_task.get_successor_states(node.state):
             # duplicate detection
             if successor_state not in closed:
                 queue.append(
                     searchspace.make_child_node(node, operator, successor_state)
                 )
+                metrics["nodes_created"] += 1
                 # remember the successor state
                 closed.add(successor_state)
     logging.info("No operators left. Task unsolvable.")
     logging.info("%d Nodes expanded" % iteration)
-    return None
+    return None, metrics

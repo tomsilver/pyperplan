@@ -121,6 +121,7 @@ def sat_solve(task, max_steps=HORIZON):
     Returns a list of operators or None if no valid plan could be found
     with <= 'HORIZON' steps
     """
+    raise NotImplementedError("Metrics not yet added for this search alg.")
     logging.info(f"Maximum number of plan steps: {max_steps}")
     for horizon in range(max_steps + 1):
         logging.info(f"Horizon: {horizon}")

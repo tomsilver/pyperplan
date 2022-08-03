@@ -126,6 +126,7 @@ def astar_search(
                            ordered_node_greedy_best_first with obvious
                            meanings.
     """
+    metrics = {"nodes_expanded": 0, "nodes_created": 0}
     open = []
     state_cost = {task.initial_state: 0}
     node_tiebreaker = 0
@@ -151,11 +152,12 @@ def astar_search(
         # path after creating this node and hence can disregard it.
         if state_cost[pop_state] == pop_node.g:
             expansions += 1
+            metrics["nodes_expanded"] += 1
 
             if task.goal_reached(pop_state):
                 logging.info("Goal reached. Start extraction of solution.")
                 logging.info("%d Nodes expanded" % expansions)
-                return pop_node.extract_solution()
+                return pop_node.extract_solution(), metrics
             rplan = None
             if use_relaxed_plan:
                 (rh, rplan) = heuristic.calc_h_with_plan(
@@ -187,9 +189,10 @@ def astar_search(
                     # cheaper path to succ_state than previously.
                     node_tiebreaker += 1
                     heapq.heappush(open, make_open_entry(succ_node, h, node_tiebreaker))
+                    metrics["nodes_created"] += 1
                     state_cost[succ_state] = succ_node.g
 
         counter += 1
     logging.info("No operators left. Task unsolvable.")
     logging.info("%d Nodes expanded" % expansions)
-    return None
+    return None, metrics

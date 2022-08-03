@@ -34,7 +34,8 @@ def breadth_first_search(planning_task):
     @return: The solution as a list of operators or None if the task is
     unsolvable.
     """
-    metrics = {"nodes_expanded": 0, "nodes_created": 0}
+    # Initialize nodes created to 1 for the root.
+    metrics = {"nodes_expanded": 0, "nodes_created": 1}
     # counts the number of loops (only for printing)
     iteration = 0
     # fifo-queue storing the nodes which are next to explore

@@ -35,7 +35,8 @@ def enforced_hillclimbing_search(planning_task, heuristic, use_preferred_ops=Fal
     found. Note that enforced hill climbing is an incomplete algorith, so it
     may fail to find a solution even though the task is solvable.
     """
-    metrics = {"nodes_expanded": 0, "nodes_created": 0}
+    # Initialize nodes created to 1 for the root.
+    metrics = {"nodes_expanded": 0, "nodes_created": 1}
     # counts the number of loops (only for printing)
     iteration = 0
     # fifo-queue storing the nodes which are next to explore

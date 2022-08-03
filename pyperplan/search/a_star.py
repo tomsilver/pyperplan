@@ -126,7 +126,8 @@ def astar_search(
                            ordered_node_greedy_best_first with obvious
                            meanings.
     """
-    metrics = {"nodes_expanded": 0, "nodes_created": 0}
+    # Initialize nodes created to 1 for the root.
+    metrics = {"nodes_expanded": 0, "nodes_created": 1}
     open = []
     state_cost = {task.initial_state: 0}
     node_tiebreaker = 0

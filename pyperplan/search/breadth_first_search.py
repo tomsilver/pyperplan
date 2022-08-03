@@ -25,7 +25,7 @@ import logging
 from . import searchspace
 
 
-def breadth_first_search(planning_task):
+def breadth_first_search(planning_task, rng):
     """
     Searches for a plan on the given task using breadth first search and
     duplicate detection.
@@ -34,6 +34,7 @@ def breadth_first_search(planning_task):
     @return: The solution as a list of operators or None if the task is
     unsolvable.
     """
+    raise NotImplementedError("Support for rng not yet implemented.")
     # Initialize nodes created to 1 for the root.
     metrics = {"nodes_expanded": 0, "nodes_created": 1}
     # counts the number of loops (only for printing)

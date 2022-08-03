@@ -48,8 +48,7 @@ def ordered_node_weighted_astar(weight):
     @param weight The weight to be used for h
     @param node The node itself
     @param h The heuristic value
-    @param node_tiebreaker An increasing value to prefer the value first
-                           inserted if the ordering is the same
+    @param node_tiebreaker A randomized value to break ties.
     @returns A tuple to be inserted into priority queues
     """
     """
@@ -75,15 +74,14 @@ def ordered_node_greedy_best_first(node, h, node_tiebreaker):
 
     @param node The node itself.
     @param h The heuristic value.
-    @param node_tiebreaker An increasing value to prefer the value first
-                           inserted if the ordering is the same.
+    @param node_tiebreaker A randomized value to break ties.
     @returns A tuple to be inserted into priority queues.
     """
     f = h
     return (f, h, node_tiebreaker, node)
 
 
-def greedy_best_first_search(task, heuristic, use_relaxed_plan=False):
+def greedy_best_first_search(task, heuristic, rng, use_relaxed_plan=False):
     """
     Searches for a plan in the given task using greedy best first search.
 
@@ -92,11 +90,11 @@ def greedy_best_first_search(task, heuristic, use_relaxed_plan=False):
                      from a search node to reach the goal.
     """
     return astar_search(
-        task, heuristic, ordered_node_greedy_best_first, use_relaxed_plan
+        task, heuristic, rng, ordered_node_greedy_best_first, use_relaxed_plan
     )
 
 
-def weighted_astar_search(task, heuristic, weight=5, use_relaxed_plan=False):
+def weighted_astar_search(task, heuristic, rng, weight=5, use_relaxed_plan=False):
     """
     Searches for a plan in the given task using A* search.
 
@@ -106,12 +104,12 @@ def weighted_astar_search(task, heuristic, weight=5, use_relaxed_plan=False):
     @param weight A weight to be applied to the heuristics value for each node.
     """
     return astar_search(
-        task, heuristic, ordered_node_weighted_astar(weight), use_relaxed_plan
+        task, heuristic, rng, ordered_node_weighted_astar(weight), use_relaxed_plan
     )
 
 
 def astar_search(
-    task, heuristic, make_open_entry=ordered_node_astar, use_relaxed_plan=False
+    task, heuristic, rng, make_open_entry=ordered_node_astar, use_relaxed_plan=False
 ):
     """
     Searches for a plan in the given task using A* search.
@@ -130,7 +128,7 @@ def astar_search(
     metrics = {"nodes_expanded": 0, "nodes_created": 1}
     open = []
     state_cost = {task.initial_state: 0}
-    node_tiebreaker = 0
+    node_tiebreaker = rng.uniform()  # randomize tiebreaking
 
     root = searchspace.make_root_node(task.initial_state)
     init_h = heuristic(root)
@@ -188,7 +186,7 @@ def astar_search(
                 if succ_node.g < old_succ_g:
                     # We either never saw succ_state before, or we found a
                     # cheaper path to succ_state than previously.
-                    node_tiebreaker += 1
+                    node_tiebreaker = rng.uniform()  # randomize tiebreaking
                     heapq.heappush(open, make_open_entry(succ_node, h, node_tiebreaker))
                     metrics["nodes_created"] += 1
                     state_cost[succ_state] = succ_node.g

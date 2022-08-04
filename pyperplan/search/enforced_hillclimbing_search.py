@@ -25,8 +25,7 @@ import logging
 from . import searchspace
 
 
-def enforced_hillclimbing_search(planning_task, heuristic, rng, max_nodes_created,
-                                 use_preferred_ops=False):
+def enforced_hillclimbing_search(planning_task, heuristic, rng, use_preferred_ops=False):
     """
     Searches for a plan on the given task using enforced hill climbing and
     duplicate detection.
@@ -91,8 +90,6 @@ def enforced_hillclimbing_search(planning_task, heuristic, rng, max_nodes_create
                     node, operator, successor_state
                 )
                 metrics["nodes_created"] += 1
-                if metrics["nodes_created"] >= max_nodes_created:
-                    return None, metrics
                 heuristic_value = heuristic(successor_node)
                 if heuristic_value == float("inf"):
                     continue

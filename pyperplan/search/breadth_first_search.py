@@ -25,7 +25,7 @@ import logging
 from . import searchspace
 
 
-def breadth_first_search(planning_task, rng, max_nodes_created):
+def breadth_first_search(planning_task, rng):
     """
     Searches for a plan on the given task using breadth first search and
     duplicate detection.
@@ -65,8 +65,6 @@ def breadth_first_search(planning_task, rng, max_nodes_created):
                     searchspace.make_child_node(node, operator, successor_state)
                 )
                 metrics["nodes_created"] += 1
-                if metrics["nodes_created"] >= max_nodes_created:
-                    return None, metrics
                 # remember the successor state
                 closed.add(successor_state)
     logging.info("No operators left. Task unsolvable.")

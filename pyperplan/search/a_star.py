@@ -81,7 +81,8 @@ def ordered_node_greedy_best_first(node, h, node_tiebreaker):
     return (f, h, node_tiebreaker, node)
 
 
-def greedy_best_first_search(task, heuristic, rng, use_relaxed_plan=False):
+def greedy_best_first_search(task, heuristic, rng, max_nodes_created,
+                             use_relaxed_plan=False):
     """
     Searches for a plan in the given task using greedy best first search.
 
@@ -90,11 +91,13 @@ def greedy_best_first_search(task, heuristic, rng, use_relaxed_plan=False):
                      from a search node to reach the goal.
     """
     return astar_search(
-        task, heuristic, rng, ordered_node_greedy_best_first, use_relaxed_plan
+        task, heuristic, rng, max_nodes_created,
+        ordered_node_greedy_best_first, use_relaxed_plan
     )
 
 
-def weighted_astar_search(task, heuristic, rng, weight=5, use_relaxed_plan=False):
+def weighted_astar_search(task, heuristic, rng, max_nodes_created,
+                          weight=5, use_relaxed_plan=False):
     """
     Searches for a plan in the given task using A* search.
 
@@ -104,12 +107,14 @@ def weighted_astar_search(task, heuristic, rng, weight=5, use_relaxed_plan=False
     @param weight A weight to be applied to the heuristics value for each node.
     """
     return astar_search(
-        task, heuristic, rng, ordered_node_weighted_astar(weight), use_relaxed_plan
+        task, heuristic, rng, max_nodes_created,
+        ordered_node_weighted_astar(weight), use_relaxed_plan
     )
 
 
 def astar_search(
-    task, heuristic, rng, make_open_entry=ordered_node_astar, use_relaxed_plan=False
+    task, heuristic, rng, max_nodes_created,
+    make_open_entry=ordered_node_astar, use_relaxed_plan=False
 ):
     """
     Searches for a plan in the given task using A* search.
@@ -189,6 +194,8 @@ def astar_search(
                     node_tiebreaker = rng.uniform()  # randomize tiebreaking
                     heapq.heappush(open, make_open_entry(succ_node, h, node_tiebreaker))
                     metrics["nodes_created"] += 1
+                    if metrics["nodes_created"] >= max_nodes_created:
+                        return None, metrics
                     state_cost[succ_state] = succ_node.g
 
         counter += 1

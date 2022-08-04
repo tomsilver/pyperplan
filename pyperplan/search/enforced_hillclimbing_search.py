@@ -25,7 +25,7 @@ import logging
 from . import searchspace
 
 
-def enforced_hillclimbing_search(planning_task, heuristic, rng, use_preferred_ops=False):
+def enforced_hillclimbing_search(planning_task, heuristic, rng, timeout, use_preferred_ops=False):
     """
     Searches for a plan on the given task using enforced hill climbing and
     duplicate detection.
@@ -35,6 +35,7 @@ def enforced_hillclimbing_search(planning_task, heuristic, rng, use_preferred_op
     found. Note that enforced hill climbing is an incomplete algorith, so it
     may fail to find a solution even though the task is solvable.
     """
+    raise NotImplementedError("Support for timeout not yet implemented.")
     raise NotImplementedError("Support for rng not yet implemented.")
     # Initialize nodes created to 1 for the root.
     metrics = {"nodes_expanded": 0, "nodes_created": 1}

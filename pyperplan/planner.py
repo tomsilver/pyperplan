@@ -135,15 +135,15 @@ def _ground(
     return task
 
 
-def _search(task, search, heuristic, rng, use_preferred_ops=False):
+def _search(task, search, heuristic, rng, timeout, use_preferred_ops=False):
     logging.info(f"Search start: {task.name}")
     if heuristic:
         if use_preferred_ops:
-            solution, metrics = search(task, heuristic, rng, use_preferred_ops)
+            solution, metrics = search(task, heuristic, rng, timeout, use_preferred_ops)
         else:
-            solution, metrics = search(task, heuristic, rng)
+            solution, metrics = search(task, heuristic, rng, timeout)
     else:
-        solution, metrics = search(task, rng)
+        solution, metrics = search(task, rng, timeout)
     logging.info(f"Search end: {task.name}")
     return solution, metrics
 
@@ -156,7 +156,7 @@ def write_solution(solution, filename):
 
 
 def search_plan(
-    domain_file, problem_file, search, heuristic_class, rng, use_preferred_ops=False
+    domain_file, problem_file, search, heuristic_class, rng, timeout, use_preferred_ops=False
 ):
     """
     Parses the given input files to a specific planner task and then tries to
@@ -178,9 +178,9 @@ def search_plan(
         heuristic = heuristic_class(task)
     search_start_time = time.process_time()
     if use_preferred_ops and isinstance(heuristic, heuristics.hFFHeuristic):
-        solution, metrics = _search(task, search, heuristic, rng, use_preferred_ops=True)
+        solution, metrics = _search(task, search, heuristic, rng, timeout, use_preferred_ops=True)
     else:
-        solution, metrics = _search(task, search, heuristic, rng)
+        solution, metrics = _search(task, search, heuristic, rng, timeout)
     logging.info("Search time: {:.2}".format(time.process_time() - search_start_time))
     return solution, metrics
 

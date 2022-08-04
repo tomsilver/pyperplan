@@ -21,6 +21,7 @@ Implements the A* (a-star) and weighted A* search algorithm.
 
 import heapq
 import logging
+import time
 
 from . import searchspace
 
@@ -81,7 +82,7 @@ def ordered_node_greedy_best_first(node, h, node_tiebreaker):
     return (f, h, node_tiebreaker, node)
 
 
-def greedy_best_first_search(task, heuristic, rng, use_relaxed_plan=False):
+def greedy_best_first_search(task, heuristic, rng, timeout, use_relaxed_plan=False):
     """
     Searches for a plan in the given task using greedy best first search.
 
@@ -90,11 +91,11 @@ def greedy_best_first_search(task, heuristic, rng, use_relaxed_plan=False):
                      from a search node to reach the goal.
     """
     return astar_search(
-        task, heuristic, rng, ordered_node_greedy_best_first, use_relaxed_plan
+        task, heuristic, rng, timeout, ordered_node_greedy_best_first, use_relaxed_plan
     )
 
 
-def weighted_astar_search(task, heuristic, rng, weight=5, use_relaxed_plan=False):
+def weighted_astar_search(task, heuristic, rng, timeout, weight=5, use_relaxed_plan=False):
     """
     Searches for a plan in the given task using A* search.
 
@@ -104,12 +105,12 @@ def weighted_astar_search(task, heuristic, rng, weight=5, use_relaxed_plan=False
     @param weight A weight to be applied to the heuristics value for each node.
     """
     return astar_search(
-        task, heuristic, rng, ordered_node_weighted_astar(weight), use_relaxed_plan
+        task, heuristic, rng, timeout, ordered_node_weighted_astar(weight), use_relaxed_plan
     )
 
 
 def astar_search(
-    task, heuristic, rng, make_open_entry=ordered_node_astar, use_relaxed_plan=False
+    task, heuristic, rng, timeout, make_open_entry=ordered_node_astar, use_relaxed_plan=False
 ):
     """
     Searches for a plan in the given task using A* search.
@@ -124,6 +125,7 @@ def astar_search(
                            ordered_node_greedy_best_first with obvious
                            meanings.
     """
+    start_time = time.time()
     # Initialize nodes created to 1 for the root.
     metrics = {"nodes_expanded": 0, "nodes_created": 1}
     open = []
@@ -140,6 +142,11 @@ def astar_search(
     expansions = 0
 
     while open:
+        
+        # Failing due to timeout.
+        if time.time() - start_time >= timeout:
+            return None, metrics
+
         (f, h, _tie, pop_node) = heapq.heappop(open)
         if h < besth:
             besth = h

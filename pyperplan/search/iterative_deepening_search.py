@@ -35,8 +35,6 @@ def iterative_deepening_search(task, *args):
     @return: The solution as a list of operators or None if the task is
     unsolvable.
     """
-    raise NotImplementedError("Metrics not yet added for this search alg.")
-    raise NotImplementedError("Support for timeout not yet implemented.")
     searcher = IterativeDeepeningSearchAlgorithm()
     return searcher.search(task, *args)
 

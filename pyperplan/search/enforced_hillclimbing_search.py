@@ -25,7 +25,7 @@ import logging
 from . import searchspace
 
 
-def enforced_hillclimbing_search(planning_task, heuristic, timeout, use_preferred_ops=False):
+def enforced_hillclimbing_search(planning_task, heuristic, use_preferred_ops=False):
     """
     Searches for a plan on the given task using enforced hill climbing and
     duplicate detection.
@@ -35,9 +35,6 @@ def enforced_hillclimbing_search(planning_task, heuristic, timeout, use_preferre
     found. Note that enforced hill climbing is an incomplete algorith, so it
     may fail to find a solution even though the task is solvable.
     """
-    raise NotImplementedError("Support for timeout not yet implemented.")
-    # Initialize nodes created to 1 for the root.
-    metrics = {"nodes_expanded": 0, "nodes_created": 1}
     # counts the number of loops (only for printing)
     iteration = 0
     # fifo-queue storing the nodes which are next to explore
@@ -53,7 +50,6 @@ def enforced_hillclimbing_search(planning_task, heuristic, timeout, use_preferre
         iteration += 1
         # get the next node to explore
         node = queue.popleft()
-        metrics["nodes_expanded"] += 1
         # remember the successor state
         closed.add(node.state)
         visited.add(node.state)
@@ -61,7 +57,7 @@ def enforced_hillclimbing_search(planning_task, heuristic, timeout, use_preferre
         if planning_task.goal_reached(node.state):
             logging.info("Goal reached. Start extraction of solution.")
             logging.info("%d Nodes expanded" % len(visited))
-            return node.extract_solution(), metrics
+            return node.extract_solution()
 
         # for the preferred operator version --> recompute heuristic and
         # relaxed plan
@@ -89,7 +85,6 @@ def enforced_hillclimbing_search(planning_task, heuristic, timeout, use_preferre
                 successor_node = searchspace.make_child_node(
                     node, operator, successor_state
                 )
-                metrics["nodes_created"] += 1
                 heuristic_value = heuristic(successor_node)
                 if heuristic_value == float("inf"):
                     continue
@@ -110,4 +105,4 @@ def enforced_hillclimbing_search(planning_task, heuristic, timeout, use_preferre
                     queue.append(successor_node)
     logging.info("Enforced hill climbing failed")
     logging.info("%d Nodes expanded" % len(visited))
-    return None, metrics
+    return None

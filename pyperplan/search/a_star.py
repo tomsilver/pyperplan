@@ -84,7 +84,8 @@ def ordered_node_greedy_best_first(node, h, node_tiebreaker):
     return (f, h, node_tiebreaker, node)
 
 
-def greedy_best_first_search(task, heuristic, timeout, use_relaxed_plan=False):
+def greedy_best_first_search(task, heuristic, timeout, use_relaxed_plan=False,
+                             partial_plans=None):
     """
     Searches for a plan in the given task using greedy best first search.
 
@@ -93,11 +94,13 @@ def greedy_best_first_search(task, heuristic, timeout, use_relaxed_plan=False):
                      from a search node to reach the goal.
     """
     return astar_search(
-        task, heuristic, timeout, ordered_node_greedy_best_first, use_relaxed_plan
+        task, heuristic, timeout, ordered_node_greedy_best_first, use_relaxed_plan,
+        partial_plans=partial_plans,
     )
 
 
-def weighted_astar_search(task, heuristic, timeout, weight=5, use_relaxed_plan=False):
+def weighted_astar_search(task, heuristic, timeout, weight=5, use_relaxed_plan=False,
+                          partial_plans=None):
     """
     Searches for a plan in the given task using A* search.
 
@@ -107,12 +110,14 @@ def weighted_astar_search(task, heuristic, timeout, weight=5, use_relaxed_plan=F
     @param weight A weight to be applied to the heuristics value for each node.
     """
     return astar_search(
-        task, heuristic, timeout, ordered_node_weighted_astar(weight), use_relaxed_plan
+        task, heuristic, timeout, ordered_node_weighted_astar(weight), use_relaxed_plan,
+        partial_plans=partial_plans
     )
 
 
 def astar_search(
-    task, heuristic, timeout, make_open_entry=ordered_node_astar, use_relaxed_plan=False
+    task, heuristic, timeout, make_open_entry=ordered_node_astar,
+    use_relaxed_plan=False, partial_plans=None
 ):
     """
     Searches for a plan in the given task using A* search.
@@ -138,6 +143,28 @@ def astar_search(
     init_h = heuristic(root)
     heapq.heappush(open, make_open_entry(root, init_h, node_tiebreaker))
     logging.info("Initial h value: %f" % init_h)
+
+    # Process partial plans:
+    if partial_plans is not None:
+        for partial_plan in partial_plans:
+            node = root
+            for op in partial_plan:
+                succ_state = op.apply(node.state)
+                succ_node = searchspace.make_child_node(node, op, succ_state)
+                h = heuristic(succ_node)
+                if h == float("inf"):
+                    # don't bother with states that can't reach the goal anyway
+                    continue
+                old_succ_g = state_cost.get(succ_state, float("inf"))
+                if succ_node.g < old_succ_g:
+                    # We either never saw succ_state before, or we found a
+                    # cheaper path to succ_state than previously.
+                    node_tiebreaker += 1
+                    heapq.heappush(open, make_open_entry(succ_node, h, node_tiebreaker))
+                    metrics["nodes_created"] += 1
+                    state_cost[succ_state] = succ_node.g
+                # Update node
+                node = succ_node
 
     besth = float("inf")
     counter = 0

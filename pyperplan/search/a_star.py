@@ -149,6 +149,9 @@ def astar_search(
         for partial_plan in partial_plans:
             node = root
             for op in partial_plan:
+                # If we've reached an inapplicable operator, stop.
+                if not op.applicable(node.state):
+                    break
                 succ_state = op.apply(node.state)
                 succ_node = searchspace.make_child_node(node, op, succ_state)
                 h = heuristic(succ_node)

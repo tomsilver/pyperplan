@@ -50,7 +50,7 @@ def ordered_node_weighted_astar(weight):
     @param node The node itself
     @param h The heuristic value
     @param node_tiebreaker An increasing value to prefer the value first
-                           inserted if the ordering is the same
+                           inserted if the ordering is the same.
     @returns A tuple to be inserted into priority queues
     """
     """
@@ -77,7 +77,7 @@ def ordered_node_greedy_best_first(node, h, node_tiebreaker):
     @param node The node itself.
     @param h The heuristic value.
     @param node_tiebreaker An increasing value to prefer the value first
-                           inserted if the ordering is the same
+                           inserted if the ordering is the same.
     @returns A tuple to be inserted into priority queues.
     """
     f = h

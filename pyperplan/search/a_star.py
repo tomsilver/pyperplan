@@ -121,7 +121,7 @@ def weighted_astar_search(task, heuristic, timeout, weight=5, use_relaxed_plan=F
 def astar_search(
     task, heuristic, timeout, make_open_entry=ordered_node_astar,
     use_relaxed_plan=False, partial_plans=None,
-    partial_plan_guidance_method="edit-distance",
+    partial_plan_guidance_method="init-queue",
 ):
     """
     Searches for a plan in the given task using A* search.

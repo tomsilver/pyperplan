@@ -135,15 +135,19 @@ def _ground(
     return task
 
 
-def _search(task, search, heuristic, timeout, partial_plans=None, use_preferred_ops=False):
+def _search(task, search, heuristic, timeout, partial_plans=None, use_preferred_ops=False,
+            partial_plan_guidance_method="init-queue"):
     logging.info(f"Search start: {task.name}")
     if heuristic:
         if use_preferred_ops:
-            solution, metrics = search(task, heuristic, timeout, use_preferred_ops, partial_plans=partial_plans)
+            solution, metrics = search(task, heuristic, timeout, use_preferred_ops, partial_plans=partial_plans,
+                                       partial_plan_guidance_method=partial_plan_guidance_method)
         else:
-            solution, metrics = search(task, heuristic, timeout, partial_plans=partial_plans)
+            solution, metrics = search(task, heuristic, timeout, partial_plans=partial_plans,
+                                       partial_plan_guidance_method=partial_plan_guidance_method)
     else:
-        solution, metrics = search(task, timeout, partial_plans=partial_plans)
+        solution, metrics = search(task, timeout, partial_plans=partial_plans,
+                                   partial_plan_guidance_method=partial_plan_guidance_method)
     logging.info(f"Search end: {task.name}")
     return solution, metrics
 
@@ -158,6 +162,7 @@ def write_solution(solution, filename):
 def search_plan(
     domain_file, problem_file, search, heuristic_class, timeout,
     partial_plans=None,
+    partial_plan_guidance_method="init-queue",
     use_preferred_ops=False
 ):
     """
@@ -180,9 +185,11 @@ def search_plan(
         heuristic = heuristic_class(task)
     search_start_time = time.process_time()
     if use_preferred_ops and isinstance(heuristic, heuristics.hFFHeuristic):
-        solution, metrics = _search(task, search, heuristic, timeout, partial_plans=partial_plans, use_preferred_ops=True)
+        solution, metrics = _search(task, search, heuristic, timeout, partial_plans=partial_plans, use_preferred_ops=True,
+                                    partial_plan_guidance_method=partial_plan_guidance_method)
     else:
-        solution, metrics = _search(task, search, heuristic, timeout, partial_plans=partial_plans)
+        solution, metrics = _search(task, search, heuristic, timeout, partial_plans=partial_plans,
+                                    partial_plan_guidance_method=partial_plan_guidance_method)
     logging.info("Search time: {:.2}".format(time.process_time() - search_start_time))
     return solution, metrics
 

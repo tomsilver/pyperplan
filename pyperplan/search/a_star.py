@@ -19,6 +19,8 @@
 Implements the A* (a-star) and weighted A* search algorithm.
 """
 
+from difflib import SequenceMatcher
+
 import heapq
 import logging
 import time
@@ -85,7 +87,7 @@ def ordered_node_greedy_best_first(node, h, node_tiebreaker):
 
 
 def greedy_best_first_search(task, heuristic, timeout, use_relaxed_plan=False,
-                             partial_plans=None):
+                             partial_plans=None, partial_plan_guidance_method="init-queue"):
     """
     Searches for a plan in the given task using greedy best first search.
 
@@ -96,11 +98,12 @@ def greedy_best_first_search(task, heuristic, timeout, use_relaxed_plan=False,
     return astar_search(
         task, heuristic, timeout, ordered_node_greedy_best_first, use_relaxed_plan,
         partial_plans=partial_plans,
+        partial_plan_guidance_method=partial_plan_guidance_method,
     )
 
 
 def weighted_astar_search(task, heuristic, timeout, weight=5, use_relaxed_plan=False,
-                          partial_plans=None):
+                          partial_plans=None, partial_plan_guidance_method="init-queue"):
     """
     Searches for a plan in the given task using A* search.
 
@@ -111,13 +114,14 @@ def weighted_astar_search(task, heuristic, timeout, weight=5, use_relaxed_plan=F
     """
     return astar_search(
         task, heuristic, timeout, ordered_node_weighted_astar(weight), use_relaxed_plan,
-        partial_plans=partial_plans
+        partial_plans=partial_plans, partial_plan_guidance_method=partial_plan_guidance_method
     )
 
 
 def astar_search(
     task, heuristic, timeout, make_open_entry=ordered_node_astar,
-    use_relaxed_plan=False, partial_plans=None
+    use_relaxed_plan=False, partial_plans=None,
+    partial_plan_guidance_method="edit-distance",
 ):
     """
     Searches for a plan in the given task using A* search.
@@ -139,13 +143,25 @@ def astar_search(
     state_cost = {task.initial_state: 0}
     node_tiebreaker = 0
 
+    if partial_plans and (partial_plan_guidance_method == "edit-distance"):
+        # Override heuristic.
+        original_heuristic = heuristic
+        def heuristic(n):
+            node_plan = n.extract_solution()
+            # Compute a rough estimate of edit distance, minimizing over plans.
+            scores = set()
+            for partial_plan in partial_plans:
+                matcher = SequenceMatcher(a=partial_plan, b=node_plan)
+                score = -1 * matcher.ratio()
+                scores.add(score)
+            return (original_heuristic(n), min(scores))
+
     root = searchspace.make_root_node(task.initial_state)
     init_h = heuristic(root)
     heapq.heappush(open, make_open_entry(root, init_h, node_tiebreaker))
-    logging.info("Initial h value: %f" % init_h)
+    logging.info(f"Initial h value: {init_h}")
 
-    # Process partial plans:
-    if partial_plans is not None:
+    if partial_plans is not None and partial_plan_guidance_method == "init-queue":
         for partial_plan in partial_plans:
             node = root
             for op in partial_plan:
@@ -169,7 +185,9 @@ def astar_search(
                 # Update node
                 node = succ_node
 
-    besth = float("inf")
+    
+
+    besth = init_h
     counter = 0
     expansions = 0
 
@@ -182,7 +200,7 @@ def astar_search(
         (f, h, _tie, pop_node) = heapq.heappop(open)
         if h < besth:
             besth = h
-            logging.debug("Found new best h: %d after %d expansions" % (besth, counter))
+            logging.debug(f"Found new best h: {besth} after {counter} expansions")
 
         pop_state = pop_node.state
         # Only expand the node if its associated cost (g value) is the lowest

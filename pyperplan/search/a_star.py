@@ -165,15 +165,18 @@ def astar_search(
         for partial_plan in partial_plans:
             node = root
             for op in partial_plan:
-                # If we've reached an inapplicable operator, stop.
+                # If we've reached an inapplicable operator, skip.
+                # Skipping is preferred to breaking in the case where there
+                # are some purely bad actions in the middle of an otherwise
+                # good plan.
                 if not op.applicable(node.state):
-                    break
+                    continue
                 succ_state = op.apply(node.state)
                 succ_node = searchspace.make_child_node(node, op, succ_state)
                 h = heuristic(succ_node)
                 if h == float("inf"):
-                    # don't bother with states that can't reach the goal anyway
-                    continue
+                    # If we've reached a dead-end, might as well stop now.
+                    break
                 old_succ_g = state_cost.get(succ_state, float("inf"))
                 if succ_node.g < old_succ_g:
                     # We either never saw succ_state before, or we found a
@@ -184,8 +187,6 @@ def astar_search(
                     state_cost[succ_state] = succ_node.g
                 # Update node
                 node = succ_node
-
-    
 
     besth = init_h
     counter = 0

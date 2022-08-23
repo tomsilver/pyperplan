@@ -170,8 +170,13 @@ def astar_search(
                 # are some purely bad actions in the middle of an otherwise
                 # good plan.
                 if not op.applicable(node.state):
+                    # print(f"Hit inapplicable op: {op}")
+                    # print(f"Missing preconditions: {op.preconditions - node.state})")
+                    # import ipdb; ipdb.set_trace()
                     continue
                 succ_state = op.apply(node.state)
+                # print(f"Applying op: {op}")
+                # print(f"State now: {succ_state}")
                 succ_node = searchspace.make_child_node(node, op, succ_state)
                 h = heuristic(succ_node)
                 if h == float("inf"):
@@ -187,6 +192,9 @@ def astar_search(
                     state_cost[succ_state] = succ_node.g
                 # Update node
                 node = succ_node
+
+    # print(f"Nodes added to queue: {len(open)}")
+    # import ipdb; ipdb.set_trace()
 
     besth = init_h
     counter = 0

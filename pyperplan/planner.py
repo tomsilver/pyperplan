@@ -178,17 +178,20 @@ def search_plan(
                             interface
     @return A list of actions that solve the problem
     """
+    start_time = time.time()
     problem = _parse(domain_file, problem_file)
     task = _ground(problem)
+    elapsed_time = time.time() - start_time
+    remaining_timeout = timeout - elapsed_time
     heuristic = None
     if not heuristic_class is None:
         heuristic = heuristic_class(task)
     search_start_time = time.process_time()
     if use_preferred_ops and isinstance(heuristic, heuristics.hFFHeuristic):
-        solution, metrics = _search(task, search, heuristic, timeout, partial_plans=partial_plans, use_preferred_ops=True,
+        solution, metrics = _search(task, search, heuristic, remaining_timeout, partial_plans=partial_plans, use_preferred_ops=True,
                                     partial_plan_guidance_method=partial_plan_guidance_method)
     else:
-        solution, metrics = _search(task, search, heuristic, timeout, partial_plans=partial_plans,
+        solution, metrics = _search(task, search, heuristic, remaining_timeout, partial_plans=partial_plans,
                                     partial_plan_guidance_method=partial_plan_guidance_method)
     logging.info("Search time: {:.2}".format(time.process_time() - search_start_time))
     return solution, metrics

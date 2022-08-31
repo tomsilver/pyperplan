@@ -143,32 +143,25 @@ def astar_search(
     state_cost = {task.initial_state: 0}
     node_tiebreaker = 0
 
-    if partial_plans and (partial_plan_guidance_method == "edit-distance"):
-        # Override heuristic.
-        original_heuristic = heuristic
-        def heuristic(n):
-            node_plan = n.extract_solution()
-            # Compute a rough estimate of edit distance, minimizing over plans.
-            scores = set()
-            for partial_plan in partial_plans:
-                matcher = SequenceMatcher(a=partial_plan, b=node_plan)
-                score = -1 * matcher.ratio()
-                scores.add(score)
-            return (original_heuristic(n), min(scores))
-
     root = searchspace.make_root_node(task.initial_state)
     init_h = heuristic(root)
     heapq.heappush(open, make_open_entry(root, init_h, node_tiebreaker))
     logging.info(f"Initial h value: {init_h}")
 
+    assert partial_plan_guidance_method != "edit-distance", "DEPRECATED"
     if partial_plans is not None and partial_plan_guidance_method == "init-queue":
+        op_map = {op.name: op for op in task.operators}
         for partial_plan in partial_plans:
             node = root
-            for op in partial_plan:
-                # If we've reached an inapplicable operator, skip.
+            for op_name in partial_plan:
                 # Skipping is preferred to breaking in the case where there
                 # are some purely bad actions in the middle of an otherwise
                 # good plan.
+                try:
+                    op = op_map[op_name]
+                except KeyError:
+                    continue
+                # If we've reached an inapplicable operator, skip.
                 if not op.applicable(node.state):
                     # print(f"Hit inapplicable op: {op}")
                     # print(f"Missing preconditions: {op.preconditions - node.state})")

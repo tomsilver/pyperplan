@@ -143,13 +143,42 @@ def astar_search(
     state_cost = {task.initial_state: 0}
     node_tiebreaker = 0
 
+    if partial_plan_guidance_method is None:
+        partial_plan_guidance_method = ""
+
+    if "prioritize-matches" in partial_plan_guidance_method:
+        original_heuristic = heuristic
+        def heuristic(node):
+            original_h = original_heuristic(node)
+            node_plan = node.extract_solution()
+            if not node_plan:
+                return (original_h, 0.0)
+            match_scores = []
+            for partial_plan in partial_plans:
+                if not partial_plan:
+                    continue
+                plan_match_scores = []
+                for op_name, predicted_op in zip(partial_plan, node_plan):
+                    predicted_op_name = predicted_op.name
+                    matcher = SequenceMatcher(a=op_name.split(" "),
+                                              b=predicted_op_name.split(" "))
+                    match_score = -1 * matcher.ratio()  # lower is better
+                    plan_match_scores.append(match_score)
+                match_scores.append(sum(plan_match_scores))
+            if not match_scores:
+                return (original_h, 0.0)
+            # Average over partial plans.
+            avg_score = sum(match_scores) / (1.0 * len(match_scores))
+            # Try higher matched plans first.
+            return (original_h, avg_score)
+
     root = searchspace.make_root_node(task.initial_state)
     init_h = heuristic(root)
     heapq.heappush(open, make_open_entry(root, init_h, node_tiebreaker))
     logging.info(f"Initial h value: {init_h}")
 
-    assert partial_plan_guidance_method != "edit-distance", "DEPRECATED"
-    if partial_plans is not None and partial_plan_guidance_method == "init-queue":
+    assert "edit-distance" not in partial_plan_guidance_method, "DEPRECATED"
+    if "init-queue" in partial_plan_guidance_method:
         op_map = {op.name: op for op in task.operators}
         for partial_plan in partial_plans:
             node = root

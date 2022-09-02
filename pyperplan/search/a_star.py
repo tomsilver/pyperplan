@@ -149,24 +149,29 @@ def astar_search(
     logging.info(f"Initial h value: {init_h}")
 
     assert partial_plan_guidance_method != "edit-distance", "DEPRECATED"
-    if partial_plans is not None and partial_plan_guidance_method == "init-queue":
+    if partial_plans is not None and "init-queue" in partial_plan_guidance_method:
         op_map = {op.name: op for op in task.operators}
         for partial_plan in partial_plans:
             node = root
             for op_name in partial_plan:
-                # Skipping is preferred to breaking in the case where there
-                # are some purely bad actions in the middle of an otherwise
-                # good plan.
                 try:
                     op = op_map[op_name]
                 except KeyError:
-                    continue
+                    if partial_plan_guidance_method == "init-queue-continue":
+                        continue
+                    else:
+                        assert partial_plan_guidance_method == "init-queue-break"
+                        break
                 # If we've reached an inapplicable operator, skip.
                 if not op.applicable(node.state):
                     # print(f"Hit inapplicable op: {op}")
                     # print(f"Missing preconditions: {op.preconditions - node.state})")
                     # import ipdb; ipdb.set_trace()
-                    continue
+                    if partial_plan_guidance_method == "init-queue-continue":
+                        continue
+                    else:
+                        assert partial_plan_guidance_method == "init-queue-break"
+                        break
                 succ_state = op.apply(node.state)
                 # print(f"Applying op: {op}")
                 # print(f"State now: {succ_state}")

@@ -33,7 +33,8 @@ verbose_logging = False
 
 
 def ground(
-    problem, remove_statics_from_initial_state=True, remove_irrelevant_operators=True
+    problem, remove_statics_from_initial_state=True, remove_irrelevant_operators=True,
+    remove_statics_from_operators=True,
 ):
     """
     This is the main method that grounds the PDDL task and returns an
@@ -78,7 +79,8 @@ def ground(
         logging.debug("Initial state with statics:\n%s" % init)
 
     # Ground actions
-    operators = _ground_actions(actions, type_map, statics, init)
+    operators = _ground_actions(actions, type_map, statics, init,
+        remove_statics_from_operators=remove_statics_from_operators)
     if verbose_logging:
         logging.debug("Operators:\n%s" % "\n".join(map(str, operators)))
 
@@ -221,7 +223,8 @@ def _collect_facts(operators):
     return facts
 
 
-def _ground_actions(actions, type_map, statics, init):
+def _ground_actions(actions, type_map, statics, init,
+                    remove_statics_from_operators=True):
     """
     Ground a list of actions and return the resulting list of operators.
 
@@ -230,7 +233,8 @@ def _ground_actions(actions, type_map, statics, init):
     @param statics: Names of the static predicates
     @param init: Grounded initial state
     """
-    op_lists = [_ground_action(action, type_map, statics, init) for action in actions]
+    op_lists = [_ground_action(action, type_map, statics, init, remove_statics_from_operators)
+                for action in actions]
     operators = list(itertools.chain(*op_lists))
     return operators
 
@@ -257,7 +261,8 @@ def _find_pred_in_init(pred_name, param, sig_pos, init):
     return any([match_init.match(string) for string in init])
 
 
-def _ground_action(action, type_map, statics, init):
+def _ground_action(action, type_map, statics, init,
+                   remove_statics_from_operators=True):
     """
     Ground the action and return the resulting list of operators.
     """
@@ -273,30 +278,31 @@ def _ground_action(action, type_map, statics, init):
 
     # For each parameter that is not constant,
     # remove all invalid static preconditions
-    remove_debug = 0
-    for param, objects in param_to_objects.items():
-        for pred in action.precondition:
-            # if a static predicate is present in the precondition
-            if pred.name in statics:
-                sig_pos = -1
-                count = 0
-                # check if there is an instantiation with the current parameter
-                for var, _ in pred.signature:
-                    if var == param:
-                        sig_pos = count
-                    count += 1
-                if sig_pos != -1:
-                    # remove if no instantiation present in initial state
-                    obj_copy = objects.copy()
-                    for o in obj_copy:
-                        if not _find_pred_in_init(pred.name, o, sig_pos, init):
-                            if verbose_logging:
-                                remove_debug += 1
-                            objects.remove(o)
-    if verbose_logging:
-        logging.info(
-            "Static precondition analysis removed %d possible objects" % remove_debug
-        )
+    if remove_statics_from_operators:
+        remove_debug = 0
+        for param, objects in param_to_objects.items():
+            for pred in action.precondition:
+                # if a static predicate is present in the precondition
+                if pred.name in statics:
+                    sig_pos = -1
+                    count = 0
+                    # check if there is an instantiation with the current parameter
+                    for var, _ in pred.signature:
+                        if var == param:
+                            sig_pos = count
+                        count += 1
+                    if sig_pos != -1:
+                        # remove if no instantiation present in initial state
+                        obj_copy = objects.copy()
+                        for o in obj_copy:
+                            if not _find_pred_in_init(pred.name, o, sig_pos, init):
+                                if verbose_logging:
+                                    remove_debug += 1
+                                objects.remove(o)
+        if verbose_logging:
+            logging.info(
+                "Static precondition analysis removed %d possible objects" % remove_debug
+            )
 
     # save a list of possible assignment tuples (param_name, object)
     domain_lists = [
@@ -307,7 +313,8 @@ def _ground_action(action, type_map, statics, init):
 
     # Create a new operator for each possible assignment of parameters
     ops = [
-        _create_operator(action, dict(assign), statics, init) for assign in assignments
+        _create_operator(action, dict(assign), statics, init, remove_statics_from_operators)
+                         for assign in assignments
     ]
     # Filter out the None values
     ops = filter(bool, ops)
@@ -315,7 +322,8 @@ def _ground_action(action, type_map, statics, init):
     return ops
 
 
-def _create_operator(action, assignment, statics, init):
+def _create_operator(action, assignment, statics, init,
+                     remove_statics_from_operators=True):
     """Create an operator for "action" and "assignment".
 
     Statics are handled here. True statics aren't added to the
@@ -327,7 +335,7 @@ def _create_operator(action, assignment, statics, init):
     for precondition in action.precondition:
         fact = _ground_atom(precondition, assignment)
         predicate_name = precondition.name
-        if predicate_name in statics:
+        if remove_statics_from_operators and predicate_name in statics:
             # Check if this precondition is false in the initial state
             if fact not in init:
                 # This precondition is never true -> Don't add operator
